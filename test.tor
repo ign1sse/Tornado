@@ -1,0 +1,8 @@
+var x;
+x = 10;
+print "El valor de x es: ";
+print x;
+print "\n";
+x = x + 10;
+print "El nuevo valor de x es: ";
+print x;
