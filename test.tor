@@ -1,9 +1,57 @@
-var x;
-x = 10;
-print "El valor de x es: ";
-print x;
+// Declaración de variables con y sin asignación
+var a = 5;
+var b;
+const c = 10;
+
+// Imprimir mensajes y valores de variables
+print "Inicio del programa:\n";
+print "a = ";
+print a;
 print "\n";
-input x;
-print "Nuevo valor de x: ";
-print x;
+
+// Solicitar entrada del usuario
+input b;
+
+// Imprimir el nuevo valor de 'b'
+print "Despues de ingresar b:\n";
+print "b = ";
+print b;
 print "\n";
+
+// Realizar operaciones aritméticas
+var suma = a + b;
+print "Suma de a y b (a + b) = ";
+print suma;
+print "\n";
+
+var producto = a * c;
+print "Producto de a y c (a * c) = ";
+print producto;
+print "\n";
+
+// Declaración de una constante
+const d = 50;
+print "Valor de la constante d: ";
+print d;
+print "\n";
+
+// Declaración de una función
+function mostrar_valor_d() {
+    print "Valor de d dentro de la funcion: ";
+    print d;
+    print "\n";
+}
+
+// **Nota:** Las llamadas a funciones no están implementadas aún.
+// Para evitar errores de sintaxis, las siguientes líneas están comentadas.
+
+// mostrar_valor_d();
+
+// Reasignación de una variable
+a = a + 10;
+print "Nuevo valor de a despues de la reasignacion (a = a + 10): ";
+print a;
+print "\n";
+
+// Intentar reasignar una constante (esto generará un error si se implementa correctamente)
+// d = d + 20;

@@ -6,6 +6,7 @@
 typedef struct {
     char* name;
     int value;
+    int is_const; // 1 si es constante, 0 si es variable
 } variable;
 
 variable symtable[100];
@@ -68,8 +69,24 @@ statement:
 variable_declaration:
     VAR IDENTIFIER SEMICOLON
         { assign_variable($2, 0); printf("Variable declaration: %s\n", $2); }
+  | VAR IDENTIFIER ASSIGN expression SEMICOLON
+        {
+            assign_variable($2, $4);
+            symtable[symtable_count - 1].is_const = 0; // Es variable
+            printf("Variable declaration with assignment: %s = %d\n", $2, $4);
+        }
   | CONST IDENTIFIER SEMICOLON
-        { assign_variable($2, 0); printf("Constant declaration: %s\n", $2); }
+        {
+            assign_variable($2, 0);
+            symtable[symtable_count - 1].is_const = 1; // Es constante
+            printf("Constant declaration: %s\n", $2);
+        }
+  | CONST IDENTIFIER ASSIGN expression SEMICOLON
+        {
+            assign_variable($2, $4);
+            symtable[symtable_count - 1].is_const = 1; // Es constante
+            printf("Constant declaration with assignment: %s = %d\n", $2, $4);
+        }
   ;
 
 print_statement:
@@ -148,13 +165,22 @@ int lookup_variable(char* name) {
 void assign_variable(char* name, int value) {
     for (int i = 0; i < symtable_count; i++) {
         if (strcmp(symtable[i].name, name) == 0) {
+            if (symtable[i].is_const) {
+                fprintf(stderr, "Error: No se puede reasignar la constante '%s'.\n", name);
+                exit(1);
+            }
             symtable[i].value = value;
             return;
         }
     }
     // Si no existe, agregarla
+    if (symtable_count >= 100) {
+        fprintf(stderr, "Error: Tabla de símbolos llena.\n");
+        exit(1);
+    }
     symtable[symtable_count].name = strdup(name);
     symtable[symtable_count].value = value;
+    symtable[symtable_count].is_const = 0; // Por defecto, variable
     symtable_count++;
 }
 
