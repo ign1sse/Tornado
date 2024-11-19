@@ -84,11 +84,17 @@ int symtable_count = 0;
 // Declaraciones de las funciones
 void assign_variable(char* name, int value);
 int lookup_variable(char* name);
+char* unescape_string(const char* str);
+void clear_input_buffer();
 
 void yyerror(const char *s);
 int yylex();
 
-#line 92 "parser.tab.c"
+FILE *yyin_file; // Para manejar archivos de entrada separados
+
+extern FILE *yyin;
+
+#line 98 "parser.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -548,12 +554,12 @@ static const yytype_int8 yytranslate[] =
 
 #if YYDEBUG
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
-static const yytype_int8 yyrline[] =
+static const yytype_uint8 yyrline[] =
 {
-       0,    50,    50,    51,    55,    56,    57,    58,    59,    63,
-      65,    70,    72,    83,    94,    99,   104,   105,   106,   107,
-     108,   109,   110,   111,   112,   113,   114,   115,   116,   117,
-     118,   119,   120
+       0,    56,    56,    57,    61,    62,    63,    64,    65,    69,
+      71,    76,    78,    91,   107,   112,   117,   118,   119,   120,
+     121,   122,   123,   124,   125,   126,   127,   128,   129,   130,
+     131,   132,   133
 };
 #endif
 
@@ -1170,163 +1176,170 @@ yyreduce:
   switch (yyn)
     {
   case 9: /* variable_declaration: VAR IDENTIFIER SEMICOLON  */
-#line 64 "parser.y"
+#line 70 "parser.y"
         { assign_variable((yyvsp[-1].str), 0); printf("Variable declaration: %s\n", (yyvsp[-1].str)); }
-#line 1176 "parser.tab.c"
-    break;
-
-  case 10: /* variable_declaration: CONST IDENTIFIER SEMICOLON  */
-#line 66 "parser.y"
-        { assign_variable((yyvsp[-1].str), 0); printf("Constant declaration: %s\n", (yyvsp[-1].str)); }
 #line 1182 "parser.tab.c"
     break;
 
-  case 11: /* print_statement: PRINT expression SEMICOLON  */
-#line 71 "parser.y"
-        { printf("%d", (yyvsp[-1].num)); }
+  case 10: /* variable_declaration: CONST IDENTIFIER SEMICOLON  */
+#line 72 "parser.y"
+        { assign_variable((yyvsp[-1].str), 0); printf("Constant declaration: %s\n", (yyvsp[-1].str)); }
 #line 1188 "parser.tab.c"
     break;
 
+  case 11: /* print_statement: PRINT expression SEMICOLON  */
+#line 77 "parser.y"
+        { printf("%d", (yyvsp[-1].num)); }
+#line 1194 "parser.tab.c"
+    break;
+
   case 12: /* print_statement: PRINT STRING SEMICOLON  */
-#line 73 "parser.y"
+#line 79 "parser.y"
         {
-            char* str = strdup((yyvsp[-1].str));
+            char* raw_str = strdup((yyvsp[-1].str));
             // Remover las comillas
-            str[strlen(str) - 1] = '\0';
-            printf("%s", str + 1);
-            free(str);
+            raw_str[strlen(raw_str) - 1] = '\0';
+            char* processed_str = unescape_string(raw_str + 1);
+            printf("%s", processed_str);
+            free(raw_str);
+            free(processed_str);
         }
-#line 1200 "parser.tab.c"
+#line 1208 "parser.tab.c"
     break;
 
   case 13: /* input_statement: INPUT IDENTIFIER SEMICOLON  */
-#line 84 "parser.y"
+#line 92 "parser.y"
         {
             int value;
-            printf("Entry for %s: ", (yyvsp[-1].str));
-            scanf("%d", &value);
+            printf("Enter your input %s: ", (yyvsp[-1].str));
+            fflush(stdout);
+            if (scanf("%d", &value) != 1) {
+                clear_input_buffer();
+                fprintf(stderr, "Error: Invalid input for %s.\n", (yyvsp[-1].str));
+                exit(1);
+            }
             assign_variable((yyvsp[-1].str), value);
             printf("Assignment: %s = %d\n", (yyvsp[-1].str), value);
         }
-#line 1212 "parser.tab.c"
+#line 1225 "parser.tab.c"
     break;
 
   case 14: /* function_declaration: FUNCTION IDENTIFIER LPAREN RPAREN LBRACE program RBRACE  */
-#line 95 "parser.y"
+#line 108 "parser.y"
         { printf("Function: %s\n", (yyvsp[-5].str)); }
-#line 1218 "parser.tab.c"
+#line 1231 "parser.tab.c"
     break;
 
   case 15: /* assignment_statement: IDENTIFIER ASSIGN expression SEMICOLON  */
-#line 100 "parser.y"
+#line 113 "parser.y"
         { assign_variable((yyvsp[-3].str), (yyvsp[-1].num)); printf("Assignment: %s = %d\n", (yyvsp[-3].str), (yyvsp[-1].num)); }
-#line 1224 "parser.tab.c"
+#line 1237 "parser.tab.c"
     break;
 
   case 16: /* expression: expression PLUS expression  */
-#line 104 "parser.y"
+#line 117 "parser.y"
                                      { (yyval.num) = (yyvsp[-2].num) + (yyvsp[0].num); }
-#line 1230 "parser.tab.c"
+#line 1243 "parser.tab.c"
     break;
 
   case 17: /* expression: expression MINUS expression  */
-#line 105 "parser.y"
+#line 118 "parser.y"
                                      { (yyval.num) = (yyvsp[-2].num) - (yyvsp[0].num); }
-#line 1236 "parser.tab.c"
+#line 1249 "parser.tab.c"
     break;
 
   case 18: /* expression: expression MULTIPLY expression  */
-#line 106 "parser.y"
+#line 119 "parser.y"
                                      { (yyval.num) = (yyvsp[-2].num) * (yyvsp[0].num); }
-#line 1242 "parser.tab.c"
+#line 1255 "parser.tab.c"
     break;
 
   case 19: /* expression: expression DIVIDE expression  */
-#line 107 "parser.y"
+#line 120 "parser.y"
                                      { (yyval.num) = (yyvsp[-2].num) / (yyvsp[0].num); }
-#line 1248 "parser.tab.c"
+#line 1261 "parser.tab.c"
     break;
 
   case 20: /* expression: expression MODULO expression  */
-#line 108 "parser.y"
+#line 121 "parser.y"
                                      { (yyval.num) = (yyvsp[-2].num) % (yyvsp[0].num); }
-#line 1254 "parser.tab.c"
+#line 1267 "parser.tab.c"
     break;
 
   case 21: /* expression: expression LT expression  */
-#line 109 "parser.y"
+#line 122 "parser.y"
                                      { (yyval.num) = (yyvsp[-2].num) < (yyvsp[0].num); }
-#line 1260 "parser.tab.c"
+#line 1273 "parser.tab.c"
     break;
 
   case 22: /* expression: expression GT expression  */
-#line 110 "parser.y"
+#line 123 "parser.y"
                                      { (yyval.num) = (yyvsp[-2].num) > (yyvsp[0].num); }
-#line 1266 "parser.tab.c"
+#line 1279 "parser.tab.c"
     break;
 
   case 23: /* expression: expression LE expression  */
-#line 111 "parser.y"
+#line 124 "parser.y"
                                      { (yyval.num) = (yyvsp[-2].num) <= (yyvsp[0].num); }
-#line 1272 "parser.tab.c"
+#line 1285 "parser.tab.c"
     break;
 
   case 24: /* expression: expression GE expression  */
-#line 112 "parser.y"
+#line 125 "parser.y"
                                      { (yyval.num) = (yyvsp[-2].num) >= (yyvsp[0].num); }
-#line 1278 "parser.tab.c"
+#line 1291 "parser.tab.c"
     break;
 
   case 25: /* expression: expression EQUALS expression  */
-#line 113 "parser.y"
+#line 126 "parser.y"
                                      { (yyval.num) = (yyvsp[-2].num) == (yyvsp[0].num); }
-#line 1284 "parser.tab.c"
+#line 1297 "parser.tab.c"
     break;
 
   case 26: /* expression: expression NEQUALS expression  */
-#line 114 "parser.y"
+#line 127 "parser.y"
                                      { (yyval.num) = (yyvsp[-2].num) != (yyvsp[0].num); }
-#line 1290 "parser.tab.c"
+#line 1303 "parser.tab.c"
     break;
 
   case 27: /* expression: expression AND expression  */
-#line 115 "parser.y"
+#line 128 "parser.y"
                                      { (yyval.num) = (yyvsp[-2].num) && (yyvsp[0].num); }
-#line 1296 "parser.tab.c"
+#line 1309 "parser.tab.c"
     break;
 
   case 28: /* expression: expression OR expression  */
-#line 116 "parser.y"
+#line 129 "parser.y"
                                      { (yyval.num) = (yyvsp[-2].num) || (yyvsp[0].num); }
-#line 1302 "parser.tab.c"
+#line 1315 "parser.tab.c"
     break;
 
   case 29: /* expression: NOT expression  */
-#line 117 "parser.y"
+#line 130 "parser.y"
                                      { (yyval.num) = !(yyvsp[0].num); }
-#line 1308 "parser.tab.c"
+#line 1321 "parser.tab.c"
     break;
 
   case 30: /* expression: LPAREN expression RPAREN  */
-#line 118 "parser.y"
+#line 131 "parser.y"
                                      { (yyval.num) = (yyvsp[-1].num); }
-#line 1314 "parser.tab.c"
+#line 1327 "parser.tab.c"
     break;
 
   case 31: /* expression: NUMBER  */
-#line 119 "parser.y"
+#line 132 "parser.y"
                                      { (yyval.num) = (yyvsp[0].num); }
-#line 1320 "parser.tab.c"
+#line 1333 "parser.tab.c"
     break;
 
   case 32: /* expression: IDENTIFIER  */
-#line 120 "parser.y"
+#line 133 "parser.y"
                                      { (yyval.num) = lookup_variable((yyvsp[0].str)); }
-#line 1326 "parser.tab.c"
+#line 1339 "parser.tab.c"
     break;
 
 
-#line 1330 "parser.tab.c"
+#line 1343 "parser.tab.c"
 
       default: break;
     }
@@ -1519,7 +1532,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 123 "parser.y"
+#line 136 "parser.y"
 
 
 int lookup_variable(char* name) {
@@ -1545,10 +1558,60 @@ void assign_variable(char* name, int value) {
     symtable_count++;
 }
 
+char* unescape_string(const char* str) {
+    char* result = malloc(strlen(str) + 1); // Asignar memoria suficiente
+    if (!result) {
+        fprintf(stderr, "Error de memoria.\n");
+        exit(1);
+    }
+    char* dest = result;
+    for (const char* src = str; *src != '\0'; src++) {
+        if (*src == '\\') {
+            src++;
+            switch (*src) {
+                case 'n':
+                    *dest++ = '\n';
+                    break;
+                case 't':
+                    *dest++ = '\t';
+                    break;
+                case '\\':
+                    *dest++ = '\\';
+                    break;
+                case '\"':
+                    *dest++ = '\"';
+                    break;
+                // Añade más casos según necesites
+                default:
+                    *dest++ = *src;
+                    break;
+            }
+        } else {
+            *dest++ = *src;
+        }
+    }
+    *dest = '\0';
+    return result;
+}
+
+void clear_input_buffer() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+}
+
 void yyerror(const char *s) {
     fprintf(stderr, "Error: %s\n", s);
 }
 
-int main() {
+// Modificación del main para aceptar archivos como argumentos
+int main(int argc, char** argv) {
+    if (argc > 1) {
+        yyin_file = fopen(argv[1], "r");
+        if (!yyin_file) {
+            fprintf(stderr, "Error: No se puede abrir el archivo %s\n", argv[1]);
+            return 1;
+        }
+        yyin = yyin_file;
+    }
     return yyparse();
 }
