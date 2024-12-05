@@ -12,8 +12,9 @@
 
 ## Descripción de la Gramática del Lenguaje
 
-El lenguaje Tornado está diseñado para ser simple, interactivo y versátil. Estas son sus principales características:
+El compilador Tornado es un proyecto educativo diseñado para implementar un lenguaje de programación básico que incluye características fundamentales como declaración de variables, entrada/salida, operaciones aritméticas y estructuras de control simples. El proyecto utiliza Flex para el análisis léxico y Bison para el análisis sintáctico.
 
+## Características del Lenguaje Tornado
 - **Declaración de variables**:
   - `var` permite declarar variables, con o sin asignación inicial.
   - `const` permite declarar constantes, siempre con asignación inicial.
@@ -33,35 +34,6 @@ El lenguaje Tornado está diseñado para ser simple, interactivo y versátil. Es
 - **Estructuras de control** (no implementadas):
   - Palabras clave como `if`, `else`, `while`, `do` y `for` están reservadas para futuras implementaciones.
 
-### Gramática Simplificada
-
-```ebnf
-programa      ::= (declaracion | instruccion)* ;
-
-declaracion   ::= "var" IDENTIFIER ( "=" expresion )? ";" 
-                | "const" IDENTIFIER "=" expresion ";" ;
-
-instruccion   ::= "print" expresion ";" 
-                | "input" IDENTIFIER ";" 
-                | asignacion 
-                | funcion ;
-
-asignacion    ::= IDENTIFIER "=" expresion ";" ;
-
-funcion       ::= "function" IDENTIFIER "(" ")" bloque ;
-
-bloque        ::= "{" (instruccion)* "}" ;
-
-expresion     ::= expresion "+" expresion
-                | expresion "-" expresion
-                | expresion "*" expresion
-                | expresion "/" expresion
-                | "(" expresion ")"
-                | IDENTIFIER 
-                | NUMBER 
-                | STRING ;
-Este ejemplo no es exhaustivo, pero representa los elementos básicos del lenguaje Tornado.
-```
 # Estructura Interna del Compilador
 
 El compilador Tornado está dividido en varias fases, implementadas con **Flex** y **Bison**:
@@ -79,24 +51,50 @@ El lexer se encarga de procesar el código fuente y generar **tokens**, que son 
 
 **Ejemplo de reglas en Flex**:
 ```c
-"var"                  { return VAR; }
-"const"                { return CONST; }
-"function"             { return FUNCTION; }
+[ \t\n\r]+             ;   // Ignorar espacios y saltos de línea
 "print"                { return PRINT; }
 "input"                { return INPUT; }
+"function"             { return FUNCTION; }
+"var"                  { return VAR; }
+"const"                { return CONST; }
+"if"                   { return IF; }
+"else"                 { return ELSE; }
+"while"                { return WHILE; }
+"do"                   { return DO; }
+"for"                  { return FOR; }
+\"[^\"]*\"             { yylval.str = strdup(yytext); return STRING; }
 [a-zA-Z_][a-zA-Z0-9_]* { yylval.str = strdup(yytext); return IDENTIFIER; }
 [0-9]+(\.[0-9]+)?      { yylval.num = atof(yytext); return NUMBER; }
-\"[^\"]*\"             { yylval.str = strdup(yytext); return STRING; }
+";"                    { return SEMICOLON; }
+"{"                    { return LBRACE; }
+"}"                    { return RBRACE; }
+"("                    { return LPAREN; }
+")"                    { return RPAREN; }
+"//".*                 ; // Ignorar comentarios de una línea
+"=="                    { return EQUALS; }
+"!="                    { return NEQUALS; }
+"<="                    { return LE; }
+">="                    { return GE; }
+"&&"                    { return AND; }
+"||"                    { return OR; }
+"+"                     { return PLUS; }
+"-"                     { return MINUS; }
+"*"                     { return MULTIPLY; }
+"/"                     { return DIVIDE; }
+"%"                     { return MODULO; }
+"<"                     { return LT; }
+">"                     { return GT; }
+"="                     { return ASSIGN; }
+"!"                     { return NOT; }
+.                      { return yytext[0]; } // Otros caracteres
 ```
 ## 2. Análisis Sintáctico (Bison)
 
 El parser verifica que la secuencia de tokens cumpla con las reglas gramaticales y construye un *Árbol de Sintaxis Abstracta (AST).*
-```
+```c
 variable_declaration:
-    VAR IDENTIFIER SEMICOLON
-        { assign_variable($2, 0); }
-  | VAR IDENTIFIER ASSIGN expression SEMICOLON
-        { assign_variable($2, $4); }
+    VAR IDENTIFIER ASSIGN expression SEMICOLON
+        { assign_variable($2, $4); printf("Variable: %s = %d\n", $2, $4); }
   | CONST IDENTIFIER ASSIGN expression SEMICOLON
         { assign_variable($2, $4); symtable[symtable_count - 1].is_const = 1; }
   ;
@@ -113,6 +111,12 @@ El compilador produce un pseudocódigo que puede ser utilizado para la depuraci�
 ## 5. Manejo de Errores
 
 El compilador incluye manejo de errores léxicos, sintácticos y semánticos. Los mensajes son claros y ayudan al usuario a identificar y corregir problemas.
+```
+if (symtable[i].is_const) {
+    fprintf(stderr, "Error: No se puede reasignar la constante '%s'.\n", name);
+    exit(1);
+}
+```
 
 ### Ejemplo de Código en Tornado
 ```
